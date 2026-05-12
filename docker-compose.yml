@@ -1,0 +1,85 @@
+version: "3.9"
+
+services:
+  # ============= 前端 =============
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - deepscribe-network
+
+  # ============= 后端 =============
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      chromadb:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    networks:
+      - deepscribe-network
+
+  # ============= 数据库 =============
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-deepscribe}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-deepscribe_secret}
+      - POSTGRES_DB=${POSTGRES_DB:-deepscribe}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-deepscribe}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - deepscribe-network
+
+  # ============= Redis =============
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - deepscribe-network
+
+  # ============= ChromaDB =============
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadata:/chroma/chroma
+    networks:
+      - deepscribe-network
+
+volumes:
+  pgdata:
+  redisdata:
+  chromadata:
+
+networks:
+  deepscribe-network:
+    driver: bridge
