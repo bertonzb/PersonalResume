@@ -13,7 +13,7 @@ class DocumentUploadResponse(BaseModel):
     file_size: int
     status: str
     chunk_count: int
-    created_at: datetime
+    created_at: datetime | None = Field(default=None)
 
     model_config = {"from_attributes": True}
 

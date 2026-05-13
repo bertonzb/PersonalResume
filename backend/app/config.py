@@ -32,9 +32,12 @@ class Settings(BaseSettings):
     chroma_host: str = "localhost"
     chroma_port: int = 8001
 
-    # AI
-    openai_api_key: str = ""
-    openai_model: str = "gpt-4o"
+    # AI — LLM（兼容 OpenAI / DeepSeek）
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_model: str = "gpt-4o"
+
+    # AI — Embedding
     embedding_model: str = "text-embedding-3-small"
 
     # JWT

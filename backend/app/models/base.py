@@ -5,11 +5,18 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-class BaseModel:
+class Base(DeclarativeBase):
+    """SQLAlchemy 声明式基类。"""
+    pass
+
+
+class BaseModel(Base):
     """所有 ORM 模型的公共字段。"""
+
+    __abstract__ = True
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

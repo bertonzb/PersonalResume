@@ -49,3 +49,4 @@ htmlcov/
 *.tsbuildinfo
 next-env.d.ts
 docs/
+uploads/

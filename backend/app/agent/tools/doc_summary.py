@@ -28,19 +28,20 @@ class DocSummaryTool(BaseTool):
     async def execute(self, params: DocSummaryInput) -> DocSummaryOutput:
         settings = get_settings()
 
-        if not settings.openai_api_key:
+        if not settings.llm_api_key:
             logger.warning("doc_summary_no_api_key")
             return DocSummaryOutput(
                 summary=f"（无法生成摘要——未配置 API Key）\n内容长度: {len(params.content)} 字符",
-                key_points=["请配置 OpenAI API Key 后重试"],
+                key_points=["请配置 LLM API Key 后重试"],
             )
 
         try:
             from langchain_openai import ChatOpenAI
 
             llm = ChatOpenAI(
-                model=settings.openai_model,
-                api_key=settings.openai_api_key,
+                model=settings.llm_model,
+                api_key=settings.llm_api_key,
+                base_url=settings.llm_base_url,
                 temperature=0.2,
             )
             prompt = (

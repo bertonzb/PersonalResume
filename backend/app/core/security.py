@@ -11,7 +11,11 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    """使用 bcrypt 哈希密码。"""
+    """使用 bcrypt 哈希密码（bcrypt 限制 72 字节，超长密码截断）。"""
+    if isinstance(password, str):
+        password = password.encode("utf-8")
+    if isinstance(password, bytes) and len(password) > 72:
+        password = password[:72]
     return pwd_context.hash(password)
 
 

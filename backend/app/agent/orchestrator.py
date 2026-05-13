@@ -43,8 +43,9 @@ class AgentOrchestrator:
     def __init__(self) -> None:
         settings = get_settings()
         self.llm = ChatOpenAI(
-            model=settings.openai_model,
-            api_key=settings.openai_api_key or "sk-placeholder",
+            model=settings.llm_model,
+            api_key=settings.llm_api_key,
+            base_url=settings.llm_base_url,
             temperature=0.1,
         )
         self.tools = self._build_tools()
@@ -106,7 +107,7 @@ class AgentOrchestrator:
         )
 
         return create_agent(
-            llm=self.llm,
+            model=self.llm,
             tools=self.tools,
             system_prompt=system_prompt,
         )

@@ -34,8 +34,9 @@ class ChatService:
         if self._llm is None:
             settings = get_settings()
             self._llm = ChatOpenAI(
-                model=settings.openai_model,
-                api_key=settings.openai_api_key or "sk-placeholder",
+                model=settings.llm_model,
+                api_key=settings.llm_api_key,
+                base_url=settings.llm_base_url,
                 temperature=0.3,
             )
         return self._llm
