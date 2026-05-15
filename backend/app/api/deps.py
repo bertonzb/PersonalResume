@@ -4,11 +4,19 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
 from app.core.security import decode_token
 from app.services.auth_service import AuthService
 from app.services.chat_service import ChatService
 from app.services.document_service import DocumentService
+
+
+# ---- 数据库会话依赖 ----
+# 每个请求自动获取一个独立的数据会话
+DBSession = Annotated[AsyncSession, Depends(get_db)]
+
 
 # ---- JWT 鉴权 ----
 
@@ -43,40 +51,22 @@ async def require_user(
     return user_id
 
 
+# ---- 认证服务依赖 ----
+
+def get_auth_service(db: DBSession) -> AuthService:
+    """获取认证服务实例（注入数据库会话）。"""
+    return AuthService(db)
+
+
 # ---- 文档服务依赖 ----
 
-_document_service: DocumentService | None = None
-
-
-def get_document_service() -> DocumentService:
-    """获取文档服务实例（单例）。"""
-    global _document_service
-    if _document_service is None:
-        _document_service = DocumentService.from_request()
-    return _document_service
+def get_document_service(db: DBSession) -> DocumentService:
+    """获取文档服务实例（注入数据库会话）。"""
+    return DocumentService(db)
 
 
 # ---- 对话服务依赖 ----
 
-_chat_service: ChatService | None = None
-
-
 def get_chat_service() -> ChatService:
-    """获取对话服务实例（单例）。"""
-    global _chat_service
-    if _chat_service is None:
-        _chat_service = ChatService.from_request()
-    return _chat_service
-
-
-# ---- 认证服务依赖 ----
-
-_auth_service: AuthService | None = None
-
-
-def get_auth_service() -> AuthService:
-    """获取认证服务实例（单例）。"""
-    global _auth_service
-    if _auth_service is None:
-        _auth_service = AuthService.from_request()
-    return _auth_service
+    """获取对话服务实例（无状态，无需 DB session）。"""
+    return ChatService.from_request()

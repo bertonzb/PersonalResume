@@ -16,8 +16,8 @@ async def register(
 ) -> TokenResponse:
     """注册新用户。"""
     try:
-        auth_service.register(email=body.email, password=body.password)
-        result = auth_service.login(email=body.email, password=body.password)
+        await auth_service.register(email=body.email, password=body.password)
+        result = await auth_service.login(email=body.email, password=body.password)
         return TokenResponse(**result)
     except Exception as e:
         raise HTTPException(
@@ -32,7 +32,7 @@ async def login(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> TokenResponse:
     """用户登录。"""
-    result = auth_service.login(email=body.email, password=body.password)
+    result = await auth_service.login(email=body.email, password=body.password)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

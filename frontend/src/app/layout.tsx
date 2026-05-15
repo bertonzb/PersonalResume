@@ -9,12 +9,23 @@ export const metadata: Metadata = {
   description: '基于 RAG + AI Agent 的智能知识管理平台',
 }
 
+const theme = {
+  token: {
+    colorPrimary: '#0052d9',
+    borderRadius: 8,
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+  },
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen bg-gray-50">
+      <body className="min-h-screen">
         <AntdRegistry>
-          <ConfigProvider locale={zhCN}>{children}</ConfigProvider>
+          <ConfigProvider theme={theme} locale={zhCN}>
+            {children}
+          </ConfigProvider>
         </AntdRegistry>
       </body>
     </html>

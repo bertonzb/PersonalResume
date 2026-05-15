@@ -1,3 +1,7 @@
+# =============================================================================
+# 文件：app/main.py
+# 作用：整个后端的入口文件（相当于 IIS 的"网站"配置）。
+# =============================================================================
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -11,6 +15,7 @@ from app.api.health import router as health_router
 from app.api.upload import router as upload_router
 from app.api.chat import router as chat_router
 from app.api.auth import router as auth_router
+from app.core.database import close_db, init_db
 from app.core.exceptions import AppException
 from app.core.logging import logger, setup_logging
 from app.core.tracing import TraceIDMiddleware
@@ -19,9 +24,16 @@ from app.core.tracing import TraceIDMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理。"""
+    # ===== 启动 =====
     setup_logging()
+    # 初始化数据库引擎 + 自动建表（开发环境用，生产环境应使用 Alembic 迁移）
+    await init_db()
     logger.info("app_startup")
+
     yield
+
+    # ===== 关闭 =====
+    await close_db()
     logger.info("app_shutdown")
 
 
@@ -32,7 +44,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS（开发阶段允许所有来源）
+
+# ---- CORS 中间件 ----
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -41,12 +54,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TraceID 中间件（在 CORS 之后）
+# ---- TraceID 中间件 ----
 app.add_middleware(TraceIDMiddleware)
 
 
 # ---- 全局异常处理器 ----
-
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     status_map = {
@@ -54,13 +66,16 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
         "PERMISSION_DENIED": 403,
     }
     status_code = status_map.get(exc.code, 500)
+
     trace_id = structlog.contextvars.get_contextvars().get("trace_id", "")
+
     logger.error(
         "app_exception",
         code=exc.code,
         message=exc.message,
         status_code=status_code,
     )
+
     return JSONResponse(
         status_code=status_code,
         content={
@@ -71,7 +86,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
-# 注册路由
+# ---- 路由注册 ----
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(upload_router, prefix="/api/v1")
